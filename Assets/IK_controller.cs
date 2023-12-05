@@ -5,38 +5,69 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.XR;
+using TMPro;
+using System.IO;
+using System.Linq;
+using System;
 
 public class IK_Controller : MonoBehaviour
 {
     public InputDevice _rightController;
     public GameObject RobotBase;
-    private bool isIndexFingerPressed;
     private GameObject[] jointList = new GameObject[6];
-    private UR3_Solver Robot = new UR3_Solver();
+    private UR3_Solver Robot = new();
+    private IK_toolkit iK_Toolkit = new();
+    private APIManager aPIManager = new();
     public int ChainLength = 5;
     public Transform Target;
-
+    public TMP_Text text;
+    public float repeatRate = 4f;
+    private string filePath;
+    private GameObject sphere;
 
     // Start is called before the first frame update
-    void Awake()
+    void Start()
     {
+        // filePath = Path.Combine(Application.persistentDataPath, "log.txt");
+        Logger.ClearLogFile();
+        // Logger.WriteToLogFile(Application.persistentDataPath);
+        // var pathRead = Logger.ReadFromLogFile();
+        // text.text += pathRead;
         InitializeJoints();
+        InitializeCube();
         if(!_rightController.isValid)
-        InitializeInputDevice(InputDeviceCharacteristics.Controller | InputDeviceCharacteristics.Right, ref _rightController);
+        {
+            InitializeInputDevice(InputDeviceCharacteristics.Controller | InputDeviceCharacteristics.Right, ref _rightController);
+        }
+        // var targetPosition = Target.position;
+        // var targetRotation = Target.rotation;
+        // Vector3 euler = targetRotation.eulerAngles;
+        // text.text += "\n\ncoordinates: " + targetPosition.x + " " + targetPosition.y + " " + targetPosition.z + "\nangles: " + euler.x + " " + euler.y + " " + euler.z + "\n\n";
+        // var targetPositionb = GetPositionRootSpace(RobotBase.transform);
+        // var targetRotationb = GetRotationRootSpace(RobotBase.transform);
+        // Vector3 eulerb = targetRotationb.eulerAngles;
+        // text.text += "\n\nrobot coordinates: " + targetPositionb.x + " " + targetPositionb.y + " " + targetPositionb.z + "\nangles: " + eulerb.x + " " + eulerb.y + " " + eulerb.z + "\n\n";
+        InvokeRepeating("UpdatePosition", 0.5f, repeatRate);
     }
 
     void InitializeJoints()
     {
         var RobotChildren = RobotBase.GetComponentsInChildren<Transform>();
-        for (int i = 0; i < RobotChildren.Length; i++)
-        {
-            jointList[i] = RobotChildren[i].gameObject;
+        for (int i = 1; i < RobotChildren.Length; i++)
+        {   
+            jointList[i-1] = RobotChildren[i].gameObject;
         }
+    }
+
+    void InitializeCube()
+    {
+        sphere = GameObject.Find("SphereX");
     }
 
     private void InitializeInputDevice(InputDeviceCharacteristics inputCharacteristics, ref InputDevice inputDevice)
     {
-        List<InputDevice> devices = new List<InputDevice>();
+        List<InputDevice> devices = new();
+        //Call InputDevices to see if it can find any devices with the characteristics we're looking for
         InputDevices.GetDevicesWithCharacteristics(inputCharacteristics, devices);
 
         //Our hands might not be active and so they will not be generated from the search.
@@ -47,8 +78,9 @@ public class IK_Controller : MonoBehaviour
         }
     }
 
-    void LateUpdate()
+    void UpdatePosition()
     {
+        bool isIndexFingerPressed;
         if (_rightController.TryGetFeatureValue(CommonUsages.triggerButton, out isIndexFingerPressed) && isIndexFingerPressed)
         {
             ResolveIK();
@@ -57,37 +89,63 @@ public class IK_Controller : MonoBehaviour
 
     private void ResolveIK()
     {
-        if (Target == null)
-            return;
+        // if (Target == null)
+        //     return;
 
-        var targetPosition = GetPositionRootSpace(Target);
-        var targetRotation = GetRotationRootSpace(Target);
-        Vector3 euler = targetRotation.eulerAngles;
+        // var targetPosition = GetPositionRootSpace(Target);
+        // var targetPosition = sphere.transform.position;
+        var targetPosition = Target.position;
+        // var targetRotation = Target.rotation;
+        // Vector3 euler = targetRotation.eulerAngles;
+        // Logger.WriteToLogFile(targetPosition.x + " " + targetPosition.y + " " + targetPosition.z);
+        // Logger.WriteToLogFile(0.36f + " " + 0.5f + " " + 0.2f);
+        // var content = Logger.ReadFromLogFile();
+        // text.text = content;
 
-        var solution_array = Robot.Solve(targetPosition.x, targetPosition.y, targetPosition.z, euler.x, euler.y, euler.z);
+        // Robot.Solve(targetPosition.x, -targetPosition.z, targetPosition.y, euler.x * Mathf.Deg2Rad, euler.y * Mathf.Deg2Rad, euler.z * Mathf.Deg2Rad, text);
+
+        // var angles = targetPosition.x + " " + targetPosition.y + " " + targetPosition.z;
+        // var coordinates = "0.36 0.5 0.2";
+        // text.text += "\nhere " + coordinates;
+        
+        
+        Robot.Solve(targetPosition.x, targetPosition.y, targetPosition.z, 0f, 0f, 0f, text);
+        // iK_Toolkit.IK_Calculation(Target);
+        // Robot.Solve(1.358f, 0.058f, -0.015f, 0f, 0f, 0f, text);
+        // text.text += "\n\ncoordinates: " + targetPosition.x + " " + targetPosition.y + " " + targetPosition.z + "\nangles: " + euler.x + " " + euler.y + " " + euler.z;
+
+        // text.text += "\nangles: ";
+        string angles = string.Join(" ", Robot.solutionArray.Select(v => float.IsNaN(v) ? 0 : v));
+        // string angles = string.Join(" ", iK_Toolkit.solutionArray.Select(v => double.IsNaN(v) ? 0 : v));
+        aPIManager.SendControllerCoordinates(angles, text);
 
         for (int j = 0; j < 6; j++)
         {
-            Vector3 currentRotation = jointList[j].transform.localEulerAngles;
-            currentRotation.z = Robot.solutionArray[j];
-            jointList[j].transform.localEulerAngles = currentRotation;
+            text.text += Robot.solutionArray[j] * Mathf.Rad2Deg + " ";
+            // Vector3 currentRotation = jointList[j].transform.localEulerAngles;
+
+            // if (j == 0 || j == 4)
+            // {
+            //     currentRotation.y = Robot.solutionArray[j];  // Rotate around the y-axis
+            //     // currentRotation.y = iK_Toolkit.solutionArray[j]; // Rotate around the y-axis
+            // }
+            // else
+            // {
+            //     currentRotation.z = Robot.solutionArray[j];  // Rotate around the z-axis for other joints
+            //     // currentRotation.z = iK_Toolkit.solutionArray[j]; // Rotate around the y-axis
+            // }
+
+            // jointList[j].transform.localEulerAngles = currentRotation;
         }
+
     }
 
     private Vector3 GetPositionRootSpace(Transform current)
     {
-        if (RobotBase == null)
+        if (Target == null)
             return current.position;
         else
-            return Quaternion.Inverse(RobotBase.transform.rotation) * (current.position - RobotBase.transform.position);
-    }
-
-    private void SetPositionRootSpace(Transform current, Vector3 position)
-    {
-        if (RobotBase == null)
-            current.position = position;
-        else
-            current.position = RobotBase.transform.rotation * position + RobotBase.transform.position;
+            return Quaternion.Inverse(Target.transform.rotation) * (current.position - Target.transform.position);
     }
 
     private Quaternion GetRotationRootSpace(Transform current)
@@ -97,14 +155,6 @@ public class IK_Controller : MonoBehaviour
             return current.rotation;
         else
             return Quaternion.Inverse(current.rotation) * RobotBase.transform.rotation;
-    }
-
-    private void SetRotationRootSpace(Transform current, Quaternion rotation)
-    {
-        if (RobotBase == null)
-            current.rotation = rotation;
-        else
-            current.rotation = RobotBase.transform.rotation * rotation;
     }
 
     void OnDrawGizmos()

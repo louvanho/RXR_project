@@ -2,12 +2,15 @@ using UnityEngine;
 using UnityEngine.UI;
 using System.Collections;
 using System;
+using TMPro;
 
 public class UR3_Solver
 {
-    private float DH_ratio = 4.185057f / 0.24355f; //taken from length of DH_a
-    private float[] DH_d = { 0f, .15185f, 0f, 0f, -.13105f, .08535f, .0921f };
-    private float[] DH_a = { 0f, 0f, -.24355f, -.2132f, 0f, 0f, 0f };
+    //change your DH parameters to match the scaling in unity
+    private float DH_ratio = 0.661655f / 0.24355f; //taken from length of DH_a
+    //DH_d[4] was changed to -.119 from .109 to accomidate axis change (and .119 fit better for unity), and DH_d[5] was changed slightly as well    
+    private float[] DH_d = { 0f, 0.15185f, 0f, 0f, 0.13105f, 0.08535f, 0.0921f };
+    private float[] DH_a = { 0f, 0f, -0.24355f, -0.2132f, 0f, 0f, 0f };
     private float[] DH_alph = { 0f, (float)(Math.PI / 2), 0f, 0f, (float)(Math.PI / 2), (float)(-Math.PI / 2), 0f };
 
     //contains final solutions for Unity
@@ -15,6 +18,7 @@ public class UR3_Solver
     public float[] solutionArray = new float[6];
 
     private float x, y, z, phi, theta, psi;
+    TMP_Text text;
 
     public UR3_Solver()
     {
@@ -30,7 +34,7 @@ public class UR3_Solver
 
         x = y = z = phi = theta = psi = 0;
 
-        DHConvert();
+        // DHConvert();
     }
 
     private void DHConvert() //unity units for this model is different from real world size
@@ -42,26 +46,38 @@ public class UR3_Solver
         }
     }
 
-    public float[] Solve(float x2, float y2, float z2, float phi2, float theta2, float psi2)
+    public void Solve(float x2, float y2, float z2, float phi2, float theta2, float psi2, TMP_Text text)
     {
         Matrix4x4 efPos;
         this.x = x2;
-        this.psi = phi2;
-        this.y = -z2;
-        this.theta = -psi2;
-        this.z = y2;
+        this.y = y2;
+        this.z = z2;
         this.phi = theta2;
+        this.psi = phi2;
+        this.theta = -psi2;
+        // this.x = x2;
+        // this.psi = phi2;
+        // this.y = z2;
+        // this.theta = -psi2;
+        // this.z =  y2;
+        // this.phi = theta2;
 
         efPos = hMatrix();
 
         IK_Solver(efPos);
-        
+
         for (int i = 0; i < 6; i++)
         {
-            this.solutionArray[i] = this.solutionMatrix[i, 0] * Mathf.Rad2Deg;
-        }
+            this.solutionArray[i] = this.solutionMatrix[i, 0];
+            // if ((i == 1 || i == 3) && (this.solutionMatrix[i, 0] == 0 || this.solutionMatrix[i, 0] == float.NaN)){
+            //     this.solutionArray[i] = -1.57f;
+            // }
 
-        return this.solutionArray;
+            // if (this.solutionMatrix[i, 0] > 3.5)
+            // {
+            //     this.solutionArray[i] = -(6.28f - this.solutionMatrix[i, 0]);
+            // }
+        }
     }
 
     //create your homogeneous transformation matrix
@@ -80,24 +96,52 @@ public class UR3_Solver
         translate.m03 = x;
         translate.m13 = y;
         translate.m23 = z;
+        translate.m33 = 0;
+        // translate.m00 = 0;
+        // translate.m01 = 0;
+        // translate.m02 = 0;
+        // translate.m10 = 0;
+        // translate.m11 = 0;
+        // translate.m12 = 0;
+        // translate.m20 = 0;
+        // translate.m21 = 0;
+        // translate.m22 = 0;
+        // translate.m30 = 0;
+        // translate.m31 = 0;
+        // translate.m32 = 0;
 
         //set roll matrix (z rotation)
-        roll.m00 = (float)Math.Cos(phi);
-        roll.m01 = -(float)Math.Sin(phi);
-        roll.m10 = (float)Math.Sin(phi);
-        roll.m11 = (float)Math.Cos(phi);
+        // roll.m00 = (float)Math.Cos(phi);
+        // roll.m01 = -(float)Math.Sin(phi);
+        // roll.m10 = (float)Math.Sin(phi);
+        // roll.m11 = (float)Math.Cos(phi);
+
+        roll.m00 = 0;
+        roll.m01 = 0;
+        roll.m10 = 0;
+        roll.m11 = 0;
 
         //set pitch matrix (y rotation)
-        pitch.m00 = (float)Math.Cos(theta);
-        pitch.m02 = (float)Math.Sin(theta);
-        pitch.m20 = -(float)Math.Sin(theta);
-        pitch.m22 = (float)Math.Cos(theta);
+        // pitch.m00 = (float)Math.Cos(theta);
+        // pitch.m02 = (float)Math.Sin(theta);
+        // pitch.m20 = -(float)Math.Sin(theta);
+        // pitch.m22 = (float)Math.Cos(theta);
+
+        pitch.m00 = 0;
+        pitch.m02 = 0;
+        pitch.m20 = 0;
+        pitch.m22 = 0;
 
         //set yaw matrix (x rotation)
-        yaw.m11 = (float)Math.Cos(psi);
-        yaw.m12 = -(float)Math.Sin(psi);
-        yaw.m21 = (float)Math.Sin(psi);
-        yaw.m22 = (float)Math.Cos(psi);
+        // yaw.m11 = (float)Math.Cos(psi);
+        // yaw.m12 = -(float)Math.Sin(psi);
+        // yaw.m21 = (float)Math.Sin(psi);
+        // yaw.m22 = (float)Math.Cos(psi);
+
+        yaw.m11 = 0;
+        yaw.m12 = 0;
+        yaw.m21 = 0;
+        yaw.m22 = 0;
 
         //will need to set end effector rotation matrix
         /*        matrix = roll * pitch * yaw * translate;    */
@@ -152,6 +196,9 @@ public class UR3_Solver
 
         //first theta1 calculation with the positive square root
         theta1 = (float)(Math.Atan2(p05.y, p05.x) + Math.Acos(DH_d[4] / Math.Sqrt(Math.Pow(p05.x, 2) + Math.Pow(p05.y, 2))) + Math.PI / 2);
+        // var A=p06.y-DH_d[6]*efPos.m12;
+        // var B=p06.x-DH_d[6]*efPos.m02;
+        // theta1=(float)Math.Atan2(Math.Sqrt(Math.Pow(B,2)+Math.Pow(-A, 2)-Math.Pow(DH_d[4],2)),DH_d[4])+(float)Math.Atan2(B,-A);
         //Debug.Log("theta1 = " + theta1 * Mathf.Rad2Deg);
 
         //fill in the first four elements of the first row of the solution matrix with theta1
@@ -162,6 +209,7 @@ public class UR3_Solver
 
         //recalculate theta1 for the negative square root and store
         theta1 = (float)(Math.Atan2(p05.y, p05.x) - Math.Acos(DH_d[4] / Math.Sqrt(Math.Pow(p05.x, 2) + Math.Pow(p05.y, 2))) + Math.PI / 2);
+        // theta1=-(float)Math.Atan2(Math.Sqrt(Math.Pow(B,2) + Math.Pow(-A, 2) - Math.Pow(DH_d[4], 2)),DH_d[4])+(float)Math.Atan2(B,-A);
         for (int i = 4; i < 8; i++)
         {
             this.solutionMatrix[0, i] = theta1;

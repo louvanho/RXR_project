@@ -139,9 +139,6 @@ PlayerSettings:
   bundleVersion: 0.1
   preloadedAssets:
   - {fileID: 0}
-  - {fileID: 11400000, guid: 93f22275161d9534e9c1e56ba140902b, type: 2}
-  - {fileID: 8344838086715927188, guid: f94aefbdb7154da4cad357a495dc6588, type: 2}
-  - {fileID: 6532150109700111865, guid: 520d2dca0ba991c4bb25c4284eb253ad, type: 2}
   metroInputSource: 0
   wsaTransparentSwapchain: 0
   m_HolographicPauseOnTrackingLoss: 1
@@ -161,7 +158,8 @@ PlayerSettings:
   resetResolutionOnWindowResize: 0
   androidSupportedAspectRatio: 1
   androidMaxAspectRatio: 2.1
-  applicationIdentifier: {}
+  applicationIdentifier:
+    Android: com.louvanho.UR3e_model_test
   buildNumber:
     Standalone: 0
     VisionOS: 0
@@ -839,4 +837,4 @@ PlayerSettings:
   hmiLoadingImage: {fileID: 0}
   platformRequiresReadableAssets: 0
   virtualTexturingSupportEnabled: 0
-  insecureHttpOption: 0
+  insecureHttpOption: 2
