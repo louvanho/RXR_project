@@ -9,7 +9,7 @@ public class APIManager
 
     public static string robotArmManagerURI = "";
 
-    public string defaultServerURI = "http://10.138.226.51:5002/";
+    public string defaultServerURI = "http://10.138.226.6:5002/";
 
     TMP_Text text;
 

@@ -315,8 +315,8 @@ public class UR3_Solver
                 theta4 = (float)Math.Atan2(T34.m10, T34.m00);
 
                 this.solutionMatrix[2, i] = theta3;
-                this.solutionMatrix[1, i] = theta2;
-                this.solutionMatrix[3, i] = theta4;
+                this.solutionMatrix[1, i] = theta2 - (float)Math.PI/2;
+                this.solutionMatrix[3, i] = theta4 - (float)Math.PI / 2;
             }
             else
             {
@@ -329,8 +329,8 @@ public class UR3_Solver
                 theta4 = (float)Math.Atan2(T34.m10, T34.m00);
 
                 this.solutionMatrix[2, i] = theta3;
-                this.solutionMatrix[1, i] = theta2;
-                this.solutionMatrix[3, i] = theta4;
+                this.solutionMatrix[1, i] = theta2 - (float)Math.PI / 2;
+                this.solutionMatrix[3, i] = theta4 - (float)Math.PI / 2;
             }
         }
     }

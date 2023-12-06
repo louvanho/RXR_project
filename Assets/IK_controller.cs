@@ -24,7 +24,9 @@ public class IK_Controller : MonoBehaviour
     public float repeatRate = 4f;
     private string filePath;
     private GameObject sphere;
-
+    public bool waspressed = false;
+    public Vector3 origPosition;
+    public Vector3 currOrig = new Vector3(0.1362f, 0.3557f, 0.0738f);
     // Start is called before the first frame update
     void Start()
     {
@@ -83,7 +85,21 @@ public class IK_Controller : MonoBehaviour
         bool isIndexFingerPressed;
         if (_rightController.TryGetFeatureValue(CommonUsages.triggerButton, out isIndexFingerPressed) && isIndexFingerPressed)
         {
+            if (waspressed == false)
+            {
+                waspressed = true;
+                origPosition = Target.position;
+            }
             ResolveIK();
+
+        }
+        else
+        {
+            if (waspressed == true)
+            {
+                currOrig = currOrig + Target.position - origPosition;
+            }
+            waspressed = false;
         }
     }
 
@@ -94,30 +110,46 @@ public class IK_Controller : MonoBehaviour
 
         // var targetPosition = GetPositionRootSpace(Target);
         // var targetPosition = sphere.transform.position;
-        var targetPosition = Target.position;
-        // var targetRotation = Target.rotation;
-        // Vector3 euler = targetRotation.eulerAngles;
+        var targetPosition = currOrig + Target.position - origPosition;
+        var targetRotation = Target.rotation;
+        Vector3 euler = targetRotation.eulerAngles;
         // Logger.WriteToLogFile(targetPosition.x + " " + targetPosition.y + " " + targetPosition.z);
         // Logger.WriteToLogFile(0.36f + " " + 0.5f + " " + 0.2f);
         // var content = Logger.ReadFromLogFile();
         // text.text = content;
 
-        // Robot.Solve(targetPosition.x, -targetPosition.z, targetPosition.y, euler.x * Mathf.Deg2Rad, euler.y * Mathf.Deg2Rad, euler.z * Mathf.Deg2Rad, text);
+        Robot.Solve(-targetPosition.z, -targetPosition.y, -targetPosition.x, euler.x * Mathf.Deg2Rad, euler.y * Mathf.Deg2Rad, euler.z * Mathf.Deg2Rad, text);
 
         // var angles = targetPosition.x + " " + targetPosition.y + " " + targetPosition.z;
         // var coordinates = "0.36 0.5 0.2";
         // text.text += "\nhere " + coordinates;
         
         
-        Robot.Solve(targetPosition.x, targetPosition.y, targetPosition.z, 0f, 0f, 0f, text);
+        // Robot.Solve(targetPosition.x, targetPosition.y, targetPosition.z, 0f, 0f, 0f, text);
         // iK_Toolkit.IK_Calculation(Target);
         // Robot.Solve(1.358f, 0.058f, -0.015f, 0f, 0f, 0f, text);
         // text.text += "\n\ncoordinates: " + targetPosition.x + " " + targetPosition.y + " " + targetPosition.z + "\nangles: " + euler.x + " " + euler.y + " " + euler.z;
 
         // text.text += "\nangles: ";
-        string angles = string.Join(" ", Robot.solutionArray.Select(v => float.IsNaN(v) ? 0 : v));
+        string coords = targetPosition.x + " " + targetPosition.y + " " + targetPosition.z;
+        for (int i = 0; i < 6; i++)
+        {
+            if (float.IsNaN(Robot.solutionArray[i]))
+            {
+                if ((i == 1) || (i == 3))
+                {
+                    Robot.solutionArray[i] = -(float)Math.PI/2;
+                }
+                else
+                {
+                    Robot.solutionArray[i] = 0;
+                }
+            }
+        }
+
+        string angles = string.Join(" ", Robot.solutionArray);
         // string angles = string.Join(" ", iK_Toolkit.solutionArray.Select(v => double.IsNaN(v) ? 0 : v));
-        aPIManager.SendControllerCoordinates(angles, text);
+        aPIManager.SendControllerCoordinates(angles + ' ' + coords, text);
 
         for (int j = 0; j < 6; j++)
         {
