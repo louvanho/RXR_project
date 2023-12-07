@@ -118,7 +118,7 @@ public class IK_Controller : MonoBehaviour
         // var content = Logger.ReadFromLogFile();
         // text.text = content;
 
-        Robot.Solve(-targetPosition.z, -targetPosition.y, -targetPosition.x, euler.x * Mathf.Deg2Rad, euler.y * Mathf.Deg2Rad, euler.z * Mathf.Deg2Rad, text);
+        Robot.Solve(targetPosition.z, -targetPosition.y, -targetPosition.x, euler.x * Mathf.Deg2Rad, euler.y * Mathf.Deg2Rad, euler.z * Mathf.Deg2Rad, text);
 
         // var angles = targetPosition.x + " " + targetPosition.y + " " + targetPosition.z;
         // var coordinates = "0.36 0.5 0.2";
