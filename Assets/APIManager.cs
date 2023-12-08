@@ -9,7 +9,7 @@ public class APIManager
 
     public static string robotArmManagerURI = "";
 
-    public string defaultServerURI = "http://10.138.226.74:5002/";
+    public string defaultServerURI = "http://10.138.226.61:5002/";
 
     TMP_Text text;
 
@@ -30,7 +30,6 @@ public class APIManager
 
             // Send a POST request with the specified URI and content
             using HttpResponseMessage response = await client.PostAsync(uri, content);
-            text.text += "\n" + response.StatusCode;
 
             response.EnsureSuccessStatusCode();
             string responseBody = await response.Content.ReadAsStringAsync();
